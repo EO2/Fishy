@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Breiflabbkart – Tellnes og Øygarden</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <style>
+    html, body, #map { height: 100%; margin: 0; padding: 0; }
+    .legend {
+      background: white;
+      padding: 10px;
+      line-height: 1.4em;
+      font-size: 13px;
+      border-radius: 5px;
+      box-shadow: 0 0 5px rgba(0,0,0,0.3);
+    }
+  </style>
+</head>
+<body>
+<div id="map"></div>
+<script>
+  var map = L.map('map').setView([60.3417, 5.0136], 11);
+
+  // Kartverkets raster-sjøkart
+  var rasterSjo = L.tileLayer('https://cache.kartverket.no/v1/wmts/1.0.0/sjokartraster/default/webmercator/{z}/{y}/{x}.png', {
+    attribution: '© Kartverket',
+    maxZoom: 18
+  });
+
+  // Dybdedata (WMS)
+  var dybdedata = L.tileLayer.wms('https://wms.geonorge.no/skwms1/wms.dybdedata2', {
+    layers: 'dybdedata',
+    format: 'image/png',
+    transparent: true,
+    attribution: '© Kartverket – dybdekart'
+  });
+
+  // NGU bunnsediment (WMS)
+  var bunnsediment = L.tileLayer.wms('https://ogc.ngu.no/cgi-bin/marin_berggrunn_wms', {
+    layers: 'bunnsediment',
+    format: 'image/png',
+    transparent: true,
+    attribution: '© NGU – bunnsedimentkart'
+  });
+
+  // Legg til raster og bunnsediment som default
+  rasterSjo.addTo(map);
+  bunnsediment.addTo(map);
+
+  // Marker: Tellnes kai
+  L.marker([60.3417, 5.0136]).addTo(map).bindPopup("Tellnes kai – base for teinefiske");
+
+  // Teineplasser
+  var teineplasser = [
+    [60.3365, 4.9902, "Teineplass 1 – ca. 90 m – leire/sand"],
+    [60.3398, 5.0070, "Teineplass 2 – ca. 110 m – bakkekant mot renne"],
+    [60.3452, 4.9820, "Teineplass 3 – ca. 120 m – dyp renne"],
+    [60.3505, 5.0005, "Teineplass 4 – 85 m – trygg bunn"],
+    [60.3423, 5.0230, "Teineplass 5 – 100 m – variert bunn"]
+  ];
+  for (var i = 0; i < teineplasser.length; i++) {
+    var t = teineplasser[i];
+    L.marker([t[0], t[1]]).addTo(map).bindPopup(t[2]);
+  }
+
+  // Lagkontroll
+  var baseMaps = {
+    "Sjøkart (raster)": rasterSjo
+  };
+  var overlayMaps = {
+    "Dybdedata (Kartverket)": dybdedata,
+    "Bunnsediment (NGU)": bunnsediment
+  };
+  L.control.layers(baseMaps, overlayMaps, {collapsed: false}).addTo(map);
+
+  // Legende for bunnkart
+  var legend = L.control({position: 'bottomright'});
+  legend.onAdd = function () {
+    var div = L.DomUtil.create('div', 'legend');
+    div.innerHTML += "<b>Farger i bunnkart:</b><br/>";
+    div.innerHTML += "<i style='background:#f2e6d9;width:12px;height:12px;display:inline-block'></i> Sand<br/>";
+    div.innerHTML += "<i style='background:#c9daf8;width:12px;height:12px;display:inline-block'></i> Leire<br/>";
+    div.innerHTML += "<i style='background:#b6d7a8;width:12px;height:12px;display:inline-block'></i> Grus<br/>";
+    div.innerHTML += "<i style='background:#999999;width:12px;height:12px;display:inline-block'></i> Fjell/stein<br/>";
+    return div;
+  };
+  legend.addTo(map);
+
+  // GPS-posisjon
+  map.locate({setView: false, watch: true, maxZoom: 16});
+  var gpsMarker = null;
+  function onLocationFound(e) {
+    if (gpsMarker) {
+      gpsMarker.setLatLng(e.latlng);
+    } else {
+      gpsMarker = L.marker(e.latlng).addTo(map).bindPopup("📍 Din posisjon");
+    }
+  }
+  map.on('locationfound', onLocationFound);
+
+  // Tidevannsindikator (forenklet)
+  var tide = L.control({position: 'topright'});
+  tide.onAdd = function () {
+    var div = L.DomUtil.create('div', 'legend');
+    var now = new Date();
+    var hour = now.getHours();
+    var status = (hour >= 2 && hour <= 7 || hour >= 14 && hour <= 20) ? "Høyvann 🌊" : "Lavvann 🌊";
+    div.innerHTML = "<b>Tidevann (omtrentlig):</b><br/>" + status;
+    return div;
+  };
+  tide.addTo(map);
+</script>
+</body>
+</html>

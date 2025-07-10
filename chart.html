@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Teineplasser Tellnes</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <style>
+    html, body, #map { height: 100%; margin: 0; padding: 0; }
+  </style>
+</head>
+<body>
+<div id="map"></div>
+<script>
+  var map = L.map('map').setView([60.3417, 5.0136], 12);
+
+  // Bakgrunnskart: sjøkart
+  L.tileLayer('https://cache.kartverket.no/v1/wmts/1.0.0/sjokartraster/default/webmercator/{z}/{y}/{x}.png', {
+    attribution: '© Kartverket',
+    maxZoom: 18
+  }).addTo(map);
+
+  // Dybdedata (WMS)
+  L.tileLayer.wms('https://wms.geonorge.no/skwms1/wms.dybdedata2', {
+    layers: 'dybdedata',
+    format: 'image/png',
+    transparent: true,
+    attribution: 'Dybdekart © Kartverket'
+  }).addTo(map);
+
+  // Marker: Tellnes kai
+  L.marker([60.3417, 5.0136]).addTo(map)
+    .bindPopup("Tellnes kai<br>Utgangspunkt for teinefiske")
+    .openPopup();
+
+  // Foreslåtte teineplasser (posisjoner med passende dybde og bunn)
+  var teineplasser = [
+    [60.3365, 4.9902, "Teineplass 1<br>Dybde ca. 90 m<br>Sand/leirebunn"],
+    [60.3398, 5.0070, "Teineplass 2<br>Dybde ca. 110 m<br>Nedkant av grunne topp"],
+    [60.3452, 4.9820, "Teineplass 3<br>Dybde ca. 120 m<br>Renner og skråning"],
+    [60.3505, 5.0005, "Teineplass 4<br>Dybde ca. 85 m<br>Blandingsbunn, moderat strøm"],
+    [60.3423, 5.0230, "Teineplass 5<br>Dybde ca. 100 m<br>Utenfor kaiområdet, trygg bunn"]
+  ];
+
+  for (var i = 0; i < teineplasser.length; i++) {
+    var t = teineplasser[i];
+    L.marker([t[0], t[1]]).addTo(map)
+      .bindPopup(t[2]);
+  }
+</script>
+</body>
+</html>

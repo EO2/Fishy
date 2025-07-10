@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Breiflabbkart – Øygarden og Tellnes</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <style>
+    html, body, #map { height: 100%; margin: 0; padding: 0; }
+    .legend {
+      background: white;
+      padding: 10px;
+      font-size: 13px;
+      border-radius: 4px;
+      box-shadow: 0 0 5px rgba(0,0,0,0.3);
+    }
+  </style>
+</head>
+<body>
+<div id="map"></div>
+<script>
+  var map = L.map('map').setView([60.3417, 5.0136], 11);
+
+  // Sjøkart (bakgrunn)
+  var sjokart = L.tileLayer('https://cache.kartverket.no/v1/wmts/1.0.0/sjokartraster/default/webmercator/{z}/{y}/{x}.png', {
+    attribution: '© Kartverket',
+    maxZoom: 18,
+    zIndex: 1
+  }).addTo(map);
+
+  // Dybdedata
+  var dybde = L.tileLayer.wms('https://wms.geonorge.no/skwms1/wms.dybdedata2', {
+    layers: 'dybdedata',
+    format: 'image/png',
+    transparent: true,
+    attribution: '© Kartverket – dybdedata',
+    opacity: 0.8,
+    zIndex: 5
+  }).addTo(map);
+  dybde.bringToFront();
+
+  // NGU bunnkart
+  var bunn = L.tileLayer.wms('https://ogc.ngu.no/cgi-bin/marin_berggrunn_wms', {
+    layers: 'bunnsediment',
+    format: 'image/png',
+    transparent: true,
+    attribution: '© NGU – bunnsediment',
+    opacity: 0.7,
+    zIndex: 10
+  }).addTo(map);
+  bunn.bringToFront();
+
+  // Marker Tellnes kai
+  L.marker([60.3417, 5.0136]).addTo(map).bindPopup("Tellnes kai – base");
+
+  // Teineplasser
+  const plasser = [
+    [60.3365, 4.9902, "Plass 1 – 90 m – leire/sand"],
+    [60.3398, 5.0070, "Plass 2 – 110 m – bakkekant"],
+    [60.3452, 4.9820, "Plass 3 – 120 m – dyp renne"],
+    [60.3505, 5.0005, "Plass 4 – 85 m – trygg bunn"],
+    [60.3423, 5.0230, "Plass 5 – 100 m – variert bunn"]
+  ];
+  plasser.forEach(p => L.marker([p[0], p[1]]).addTo(map).bindPopup(p[2]));
+
+  // Lagkontroll
+  L.control.layers(
+    { "Sjøkart (raster)": sjokart },
+    {
+      "Dybdedata (Kartverket)": dybde,
+      "Bunnsediment (NGU)": bunn
+    },
+    { collapsed: false }
+  ).addTo(map);
+
+  // Legende
+  L.control({ position: 'bottomright' }).onAdd = function() {
+    var div = L.DomUtil.create('div', 'legend');
+    div.innerHTML = "<b>Bunnsediment:</b><br/>";
+    div.innerHTML += "<div style='background:#f2e6d9;width:12px;height:12px;display:inline-block'></div> Sand<br/>";
+    div.innerHTML += "<div style='background:#c9daf8;width:12px;height:12px;display:inline-block'></div> Leire<br/>";
+    div.innerHTML += "<div style='background:#b6d7a8;width:12px;height:12px;display:inline-block'></div> Grus<br/>";
+    div.innerHTML += "<div style='background:#999;width:12px;height:12px;display:inline-block'></div> Fjell<br/>";
+    return div;
+  }.addTo(map);
+
+  // GPS-posisjon
+  map.locate({ setView: false, watch: true });
+  var gps = null;
+  map.on('locationfound', function(e) {
+    if (gps) gps.setLatLng(e.latlng);
+    else gps = L.marker(e.latlng).addTo(map).bindPopup("📍 Din posisjon");
+  });
+
+  // Enkel tidevann
+  L.control({ position: 'topright' }).onAdd = function() {
+    var div = L.DomUtil.create('div', 'legend');
+    var hour = new Date().getHours();
+    var tide = (hour >= 2 && hour <= 7 || hour >= 14 && hour <= 20) ? "Høyvann 🌊" : "Lavvann 🌊";
+    div.innerHTML = "<b>Tidevann:</b><br/>" + tide;
+    return div;
+  }.addTo(map);
+</script>
+</body>
+</html>

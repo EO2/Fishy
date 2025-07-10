@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Bunnkart og dybdedata - Øygarden / Tellnes</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <style>
+    html, body, #map { height: 100%; margin: 0; padding: 0; }
+  </style>
+</head>
+<body>
+<div id="map"></div>
+<script>
+  var map = L.map('map').setView([60.3417, 5.0136], 11); // Tellnes
+
+  // Kartverkets raster sjøkart
+  L.tileLayer('https://cache.kartverket.no/v1/wmts/1.0.0/sjokartraster/default/webmercator/{z}/{y}/{x}.png', {
+    attribution: '© Kartverket',
+    maxZoom: 18
+  }).addTo(map);
+
+  // Kartverkets dybdedata WMS
+  L.tileLayer.wms('https://wms.geonorge.no/skwms1/wms.dybdedata2', {
+    layers: 'dybdedata',
+    format: 'image/png',
+    transparent: true,
+    attribution: '© Kartverket – dybdekart'
+  }).addTo(map);
+
+  // NGU marine grunnkart: bunnsediment (åpen WMS)
+  L.tileLayer.wms('https://ogc.ngu.no/cgi-bin/marin_berggrunn_wms', {
+    layers: 'bunnsediment',
+    format: 'image/png',
+    transparent: true,
+    attribution: '© NGU – bunnsedimentkart'
+  }).addTo(map);
+</script>
+</body>
+</html>
